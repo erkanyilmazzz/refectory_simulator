@@ -17,7 +17,7 @@
 *   S > 3
 *   M > T >= 1
 *   L >= 3
-*   K = 3(L-1)M+1
+*   K =2LM+1
 */
 int argHandler(int __argc, char **__argv, int *n, int *m, int *t, int *s, int *l, int *k);
 

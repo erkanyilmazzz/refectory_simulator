@@ -80,7 +80,7 @@ int argHandler(int __argc, char **__argv, int *_n, int *_m, int *_t, int *_s, in
         exit(-1);
     }
 
-    *_k = 3 * (*_l - 1) * (*_m) + 1;
+    *_k = 2 * (*_l) * (*_m) + 1;
 
     return 0;
 }
