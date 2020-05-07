@@ -32,7 +32,7 @@ int get_turn(int *number_of_p, int *number_of_c, int *number_of_d, int size_of_k
     // printf("x is %d\n\n", x);
     if (x == 0)
     {
-        if (*number_of_p < size_of_kitchen / 3)
+        if (((*number_of_p) - (*number_of_c) < 1) && ((*number_of_p) - (*number_of_d) < 1))
         {
             result = 0;
         }
@@ -43,7 +43,7 @@ int get_turn(int *number_of_p, int *number_of_c, int *number_of_d, int size_of_k
     }
     else if (x == 1)
     {
-        if (*number_of_c < size_of_kitchen / 3)
+        if (((*number_of_c) - (*number_of_p) < 1) && ((*number_of_c) - (*number_of_d) < 1))
         {
             result = 1;
         }
@@ -54,7 +54,7 @@ int get_turn(int *number_of_p, int *number_of_c, int *number_of_d, int size_of_k
     }
     else if (x == 2)
     {
-        if (*number_of_d < size_of_kitchen / 3)
+        if (((*number_of_d) - (*number_of_c) < 1) && ((*number_of_d) - (*number_of_c) < 1))
         {
             result = 2;
         }
@@ -169,13 +169,56 @@ int main(int argc, char **argv)
         process = fork();
         if (process == 0)
         {
-            sem_wait(kitchen_full);
-            //cook process
-            sem_wait(mutex);
-            printf("\n\n\nit is cook pid is:%d\n", *cook_id);
+            for (size_t i = 0; i < (3 * l * m / n); i++)
+            {
+                sem_wait(kitchen_full);
+                //cook process
+                sem_wait(mutex_r);
+                int x = get_turn(P_in_counter, C_in_counter, D_in_counter, s);
+                if (x == 0)
+                {
+                    sem_wait(mutex);
+                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
+                    (*P_in_counter)++;
+                    (*P_in_kithen)--;
+                    printf("The out the kithen kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
 
-            sem_post(mutex);
-            sem_post(kitchen_empty);
+                    sem_post(mutex);
+                }
+                else if (x == 1)
+                {
+                    sem_wait(mutex);
+                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
+                    (*C_in_counter)++;
+                    (*C_in_kithen)--;
+                    printf("The out the kithen kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
+
+                    sem_post(mutex);
+                }
+                else if (x == 2)
+                {
+                    sem_wait(mutex);
+                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
+                    (*D_in_counter)++;
+                    (*D_in_kithen)--;
+                    printf("The out the kithen kitchen P:%d,C:%d,D:%d=%d\n\n",
+                           *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
+
+                    sem_post(mutex);
+                }
+
+                sem_post(mutex_r);
+                sem_post(kitchen_empty);
+            }
+
             exit(0);
         }
         munmap(cook_id, sizeof(int));
