@@ -103,8 +103,27 @@ int main(int argc, char **argv)
     sem_init(mutex, 1, 1);
     sem_t *mutex_r = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     sem_init(mutex_r, 1, 1);
-
     ////////////////////////////////////////////////////////////////////////////////////////////
+    sem_t *agent = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_t *p = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_t *c = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_t *d = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+
+    int *is_p = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    int *is_c = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    int *is_d = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    *is_p = 0;
+    *is_p = 0;
+    *is_p = 0;
+    //sem_init(agent, 1, 1);
+    sem_init(p, 1, 0);
+    sem_init(c, 1, 0);
+    sem_init(d, 1, 0);
+    ////////////////////////////////////////////////////////////////////////////////////////////
+
+    sem_t *empty1 = mmap(NULL, sizeof(sem_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_init(empty1, 1, 3);
+    ///////////////////////////////////////////////////////////////////////////////////////////////
     int process;
 
     process = fork();
@@ -161,6 +180,8 @@ int main(int argc, char **argv)
 
         exit(0);
     }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     for (size_t i = 0; i < n; i++)
     {
@@ -171,28 +192,39 @@ int main(int argc, char **argv)
         {
             for (size_t i = 0; i < (3 * l * m / n); i++)
             {
+
                 sem_wait(kitchen_full);
                 //cook process
                 sem_wait(mutex_r);
-                int x = get_turn(P_in_counter, C_in_counter, D_in_counter, s);
+                sem_wait(mutex);
+                int x;
+                if (i == 0)
+                {
+                    x = 0;
+                }
+                else
+                {
+                    x = get_turn(P_in_counter, C_in_counter, D_in_counter, s);
+                }
+                sem_post(mutex);
                 if (x == 0)
                 {
                     sem_wait(mutex);
-                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
-                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+                    printf("\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen for soup P:%d,C:%d,D:%d=%d\n\n",
                            *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
                     (*P_in_counter)++;
                     (*P_in_kithen)--;
                     printf("The out the kithen kitchen P:%d,C:%d,D:%d=%d\n\n",
                            *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
-
                     sem_post(mutex);
                 }
                 else if (x == 1)
                 {
                     sem_wait(mutex);
-                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
-                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+
+                    printf("\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen for main course P:%d,C:%d,D:%d=%d\n\n",
                            *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
                     (*C_in_counter)++;
                     (*C_in_kithen)--;
@@ -204,8 +236,9 @@ int main(int argc, char **argv)
                 else if (x == 2)
                 {
                     sem_wait(mutex);
-                    printf("\n\n\nit is cook pid is:%d ", *cook_id);
-                    printf("The enter kitchen P:%d,C:%d,D:%d=%d\n\n",
+
+                    printf("\nit is cook pid is:%d ", *cook_id);
+                    printf("The enter kitchen desert P:%d,C:%d,D:%d=%d\n\n",
                            *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
                     (*D_in_counter)++;
                     (*D_in_kithen)--;
@@ -218,7 +251,6 @@ int main(int argc, char **argv)
                 sem_post(mutex_r);
                 sem_post(kitchen_empty);
             }
-
             exit(0);
         }
         munmap(cook_id, sizeof(int));
@@ -231,12 +263,17 @@ int main(int argc, char **argv)
         process = fork();
         if (process == 0)
         {
+
             for (size_t i = l; i > 0; i--)
             {
 
                 sem_wait(mutex);
                 //student prpocess
                 printf("it is student pid is:%d and l is %d\n", *student_id, l);
+                (*P_in_counter)--;
+                (*C_in_counter)--;
+                (*D_in_counter)--;
+                printf("P:%d C:%d D:%d", *P_in_counter, *C_in_counter, *D_in_counter);
                 l--;
 
                 sem_post(mutex);
