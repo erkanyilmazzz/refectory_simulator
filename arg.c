@@ -15,15 +15,15 @@ void print_err()
     printf("M > N > 2\nS > 3\nM > T >= 1\nL >= 3\n");
 }
 
-int argHandler(int __argc, char **__argv, int *_n, int *_m, int *_t, int *_s, int *_l, int *_k)
+int argHandler(int __argc, char **__argv, int *_n, int *_m, int *_t, int *_s, int *_l, int *_k, char *file_path)
 {
     int option;
     int iflag = 0, oflag = 0, tflag = 0;
     int outputlen;
     int inputlen;
 
-    int n_flag = 0, m_flag = 0, t_flag = 0, s_flag = 0, l_flag = 0;
-    while ((option = getopt(__argc, __argv, "N: M: T: S: L:")) != -1)
+    int n_flag = 0, m_flag = 0, t_flag = 0, s_flag = 0, l_flag = 0, f_flag = 0;
+    while ((option = getopt(__argc, __argv, "N: M: T: S: L: F:")) != -1)
     {
 
         //printf("option is %d\n",option);
@@ -49,12 +49,15 @@ int argHandler(int __argc, char **__argv, int *_n, int *_m, int *_t, int *_s, in
             *_l = atoi(optarg);
             l_flag++;
             break;
+        case 'F':
+            strcpy(file_path, optarg);
+            f_flag++;
         default:
             break;
         }
     }
 
-    if (n_flag != 1 | m_flag != 1 | t_flag != 1 | s_flag != 1 | l_flag != 1)
+    if (n_flag != 1 | m_flag != 1 | t_flag != 1 | s_flag != 1 | l_flag != 1 | f_flag != 1)
     {
         printf("usage is <./program -N param -M param -T param -S param -L param>\n");
         exit(-1);

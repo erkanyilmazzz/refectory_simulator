@@ -24,6 +24,10 @@
 *   D is desert
 */
 
+/**
+ **note:you add this file part later so I cant do that part properly
+*/
+
 int get_turn(int *number_of_p, int *number_of_c, int *number_of_d, int size_of_kitchen)
 {
     int result;
@@ -71,17 +75,32 @@ int get_turn(int *number_of_p, int *number_of_c, int *number_of_d, int size_of_k
     return result;
 }
 
+char *file_path;
+void handler(int s)
+{
+    if (file_path != NULL)
+    {
+        free(file_path);
+    }
+    return;
+}
 int main(int argc, char **argv)
 {
+    struct sigaction sa;
+    sa.sa_handler = handler;
+    sigaction(SIGINT, &sa, NULL);
+    ///////////////////////////////////////////////////////////////////////////////////////////
     int n;
     int m;
     int t; //= mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     int s; //= mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     int k; // = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     int l;
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    file_path = malloc(sizeof(char) * 100);
     ////////////////////////////////////////////////////////////////////////////////////////////
-    argHandler(argc, argv, &n, &m, &t, &s, &l, &k);
-    printf("N:%d M:%d T:%d S:%d L:%d K:%d\n", n, m, t, s, l, k);
+    argHandler(argc, argv, &n, &m, &t, &s, &l, &k, file_path);
+    printf("N:%d M:%d T:%d S:%d L:%d K:%d F:%s\n", n, m, t, s, l, k, file_path);
     ////////////////////////////////////////////////////////////////////////////////////////////
     int *P_in_kithen = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     int *C_in_kithen = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
@@ -98,6 +117,12 @@ int main(int argc, char **argv)
     sem_t *kitchen_empty = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     sem_init(kitchen_full, 1, 0);
     sem_init(kitchen_empty, 1, k);
+    /////////////////////////////////////////////////////////////////////////////////////////////
+
+    sem_t *counter_full = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_t *counter_empty = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+    sem_init(counter_full, 1, 0);
+    sem_init(counter_empty, 1, s);
     /////////////////////////////////////////////////////////////////////////////////////////////
     sem_t *mutex = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
     sem_init(mutex, 1, 1);
@@ -131,6 +156,7 @@ int main(int argc, char **argv)
     { //supliyer
         for (size_t i = 0; i < l * m * 3; i++)
         {
+            //sem_wait(counter_empty);
 
             sem_wait(kitchen_empty);
 
@@ -139,6 +165,7 @@ int main(int argc, char **argv)
             int x = get_turn(P_in_kithen, C_in_kithen, D_in_kithen, k);
             if (x == 0)
             {
+
                 sem_wait(mutex);
                 printf("The supplier is P:%d,C:%d,D:%d=%d going to the kitchen to deliver soup:kitchen items\n\n",
                        *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
@@ -149,6 +176,7 @@ int main(int argc, char **argv)
             }
             else if (x == 1)
             {
+
                 sem_wait(mutex);
                 printf("The supplier is P:%d,C:%d,D:%d=%d going to the kitchen to deliver main course:kitchen items\n\n",
                        *P_in_kithen, *C_in_kithen, *D_in_kithen, *P_in_kithen + *C_in_kithen + *D_in_kithen);
@@ -159,6 +187,7 @@ int main(int argc, char **argv)
             }
             else if (x == 2)
             {
+
                 sem_wait(mutex);
                 printf("The supplier is P:%d,C:%d,D:%d=%d going to the kitchen to deliver desrt:kitchen items\n\n",
                        *P_in_kithen,
@@ -176,6 +205,7 @@ int main(int argc, char **argv)
             sem_post(mutex_r);
 
             sem_post(kitchen_full);
+            //sem_post(counter_full);
         }
 
         exit(0);
@@ -256,6 +286,10 @@ int main(int argc, char **argv)
         munmap(cook_id, sizeof(int));
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    for (size_t i = 0; i < (m); i++)
+    {
+        wait(NULL);
+    }
     for (size_t i = 0; i < m; i++)
     {
         int *student_id = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
@@ -266,17 +300,26 @@ int main(int argc, char **argv)
 
             for (size_t i = l; i > 0; i--)
             {
-
+                //sem_wait(counter_full);
                 sem_wait(mutex);
                 //student prpocess
-                printf("it is student pid is:%d and l is %d\n", *student_id, l);
+                printf("Student %d is going to the counter (round %d) - # of students at counter: 1 and counter items P:%d,C:%d,D:%d=%d\n",
+                       *student_id, l, *P_in_counter, *C_in_counter, *D_in_counter, *P_in_counter + *C_in_counter + *D_in_counter);
+                //printf("it is student pid is:%d and l is %d\n", );
                 (*P_in_counter)--;
                 (*C_in_counter)--;
                 (*D_in_counter)--;
-                printf("P:%d C:%d D:%d", *P_in_counter, *C_in_counter, *D_in_counter);
-                l--;
+                //printf("P:%d C:%d D:%d", *P_in_counter, *C_in_counter, *D_in_counter);
+                printf("Student %d left table  to eat again (round %d)\n", *student_id, l);
 
+                l--;
+                if (i == 1)
+                {
+                    printf("Student %d is done eating L=%d times - going home – GOODBYE!!!\n", *student_id, l);
+                }
                 sem_post(mutex);
+
+                //sem_post(counter_empty);
             }
             exit(0);
         }
@@ -285,15 +328,12 @@ int main(int argc, char **argv)
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    for (size_t i = 0; i < (m); i++)
-    {
-        wait(NULL);
-    }
+
     for (size_t i = 0; i < (n); i++)
     {
         wait(NULL);
     }
     wait(NULL);
-
+    free(file_path);
     return 0;
 }

@@ -19,6 +19,6 @@
 *   L >= 3
 *   K =2LM+1
 */
-int argHandler(int __argc, char **__argv, int *n, int *m, int *t, int *s, int *l, int *k);
+int argHandler(int __argc, char **__argv, int *n, int *m, int *t, int *s, int *l, int *k, char *);
 
 #endif
